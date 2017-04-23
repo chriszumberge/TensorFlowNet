@@ -119,11 +119,30 @@ namespace TensorFlowNet
         /// <summary>
         /// It is important to realize init is a handle to the TensorFlow sub-graph that initializes all the global variables. Until we call session.run, the variables are uninitialized.
         /// </summary>
-        public static void GlobalVariablesInitializer()
+        public static GlobalVariablesInitializerOperation GlobalVariablesInitializer()
         {
-            foreach(KeyValuePair<string, Tensor> tensorDefn in Tensors.Where(x => x.Value is VariableTensor))
+            return new GlobalVariablesInitializerOperation(Tensors.Where(x => x.Value is VariableTensor).Select(x => (VariableTensor)x.Value));
+        }
+
+        public static class Train
+        {
+            public static GradientDescentOptimizer GradientDescentOptimizer(float stepSize)
             {
-                ((VariableTensor)tensorDefn.Value).Initialize();
+                return new GradientDescentOptimizer(stepSize);
+            }
+        }
+
+        public class GradientDescentOptimizer
+        {
+            public float StepSize { get; private set; }
+            public GradientDescentOptimizer(float stepSize)
+            {
+                StepSize = stepSize;
+            }
+
+            public GradientDescentOperation Minimize(Tensor loss)
+            {
+                return new GradientDescentOperation(loss);
             }
         }
     }

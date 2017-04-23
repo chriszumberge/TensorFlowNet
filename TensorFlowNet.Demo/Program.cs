@@ -18,22 +18,27 @@ namespace TensorFlowNet.Demo
             Print(node2);
 
             var sess = TensorFlow.Session();
+            // [3], [4]
             Print(sess.Run(node1, node2));
+
 
             var node3 = TensorFlow.Add(node1, node2);
             Print(node3);
+            // [7]
             Print(sess.Run(node3));
 
             var a = TensorFlow.Placeholder(typeof(float));
             var c = TensorFlow.Placeholder(typeof(float));
             var adder_node = a + c;
             Print(adder_node);
+            // [7.5]
             Print(sess.Run(
                 adder_node, new Dictionary<string, Matrix<float>>
                 {
                     [a.Identifier] = Matrix<float>.Build.Dense(1, 1, 3.0f),
                     [c.Identifier] = Matrix<float>.Build.Dense(1, 1, 4.5f)
                 }));
+            // [3 7]
             Print(sess.Run(
                 adder_node, new Dictionary<string, Matrix<float>>
                 {
@@ -42,6 +47,7 @@ namespace TensorFlowNet.Demo
                 }));
 
             var add_and_triple = adder_node * 3;
+            // [22.5]
             Print(sess.Run(
                 add_and_triple, new Dictionary<string, Matrix<float>>
                 {
@@ -49,11 +55,15 @@ namespace TensorFlowNet.Demo
                     [c.Identifier] = Matrix<float>.Build.Dense(1, 1, 4.5f)
                 }));
 
+            // [9]
             Print(sess.Run(TensorFlow.Square((ConstantTensor)3.0)));
 
             var t = TensorFlow.Constant(Matrix<float>.Build.Dense(2, 3, 1));
+            // [6]
             Print(sess.Run(TensorFlow.ReduceSum(t)));
+            // [2 2 2]
             Print(sess.Run(TensorFlow.ReduceSum(t, ReduceSumAxis.Y)));
+            // [3 3]
             Print(sess.Run(TensorFlow.ReduceSum(t, ReduceSumAxis.X)));
 
             var W = TensorFlow.Variable(0.3f);
@@ -61,8 +71,10 @@ namespace TensorFlowNet.Demo
             var x = TensorFlow.Placeholder(typeof(float));
             var linear_model = W * x + b;
 
-            TensorFlow.GlobalVariablesInitializer();
+            var init = TensorFlow.GlobalVariablesInitializer();
+            sess.Run(init);
 
+            // [0 0.3 0.6 0.9]
             Print(sess.Run(linear_model, new Dictionary<string, Matrix<float>>
             {
                 [x.Identifier] = Matrix<float>.Build.DenseOfArray(new float[,] { { 1, 2, 3, 4} })
@@ -71,7 +83,8 @@ namespace TensorFlowNet.Demo
             var y = TensorFlow.Placeholder(typeof(float));
             var squared_deltas = TensorFlow.Square(linear_model - y);
             var loss = TensorFlow.ReduceSum(squared_deltas);
-
+            
+            // [23.66]
             Print(sess.Run(loss, new Dictionary<string, Matrix<float>>
             {
                 [x.Identifier] = Matrix<float>.Build.DenseOfArray(new float[,] { { 1, 2, 3, 4} }),
@@ -80,13 +93,30 @@ namespace TensorFlowNet.Demo
 
             var fixW = TensorFlow.Assign(W, -1.0f);
             var fixb = TensorFlow.Assign(b, 1.0f);
-
+            
+            // [0]
             Print(sess.Run(loss, new Dictionary<string, Matrix<float>>
             {
                 [x.Identifier] = Matrix<float>.Build.DenseOfArray(new float[,] { { 1, 2, 3, 4 } }),
                 [y.Identifier] = Matrix<float>.Build.DenseOfArray(new float[,] { { 0, -1, -2, -3 } })
             }));
 
+            var optimizer = TensorFlow.Train.GradientDescentOptimizer(0.01f);
+            var train = optimizer.Minimize(loss);
+
+            // reset variable values to (incorrect) defaults
+            sess.Run(init);
+            for (int i = 0; i < 1000; i++)
+            {
+                sess.Run(train, new Dictionary<string, Matrix<float>>
+                {
+                    [x.Identifier] = Matrix<float>.Build.DenseOfArray(new float[,] { { 1, 2, 3, 4 } }),
+                    [y.Identifier] = Matrix<float>.Build.DenseOfArray(new float[,] { { 0, -1, -2, -3 } })
+                });
+            }
+            Print(sess.Run(W, b));
+
+            Console.WriteLine("Done");
             Console.ReadLine();
         }
         public static string FormatArrayForPrint(object[] array)

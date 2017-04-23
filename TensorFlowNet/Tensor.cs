@@ -26,6 +26,8 @@ namespace TensorFlowNet
         public abstract Matrix<float> Evaluate(Dictionary<string, Matrix<float>> feedDict);
         //public abstract object Evaluate(Dictionary<string, Matrix<float>> feedDict);
 
+        public abstract Tensor Derive();
+
         public override string ToString()
         {
             return $"<Tensor \"{Identifier}\" datatype={mDataType.FullName}>";
@@ -44,18 +46,17 @@ namespace TensorFlowNet
         {
             mValue = value;
         }
-        //protected object mValue { get; set; }
-
-        //internal ConstantTensor(object value, Type dataType) : base(dataType)
-        //{
-        //    mValue = value;
-        //}
 
         public override string TensorName => "Const";
 
         public override Matrix<float> Evaluate(Dictionary<string, Matrix<float>> feedDict)
         {
             return mValue;
+        }
+
+        public override Tensor Derive()
+        {
+            return (ConstantTensor)0.0f;
         }
 
         public static implicit operator ConstantTensor(int value)
@@ -80,6 +81,11 @@ namespace TensorFlowNet
         }
 
         public override string TensorName => "Placeholder";
+
+        public override Tensor Derive()
+        {
+            return (ConstantTensor)0.0f;
+        }
 
         public override Matrix<float> Evaluate(Dictionary<string, Matrix<float>> feedDict)
         {
@@ -109,6 +115,12 @@ namespace TensorFlowNet
         internal void Initialize()
         {
             Value = InitialValue;
+        }
+
+        public override Tensor Derive()
+        {
+            // because a single variable derivate is just 1 and if it was variable squared then it'd be a power tensor
+            return (ConstantTensor)1.0f;
         }
     }
 
@@ -155,6 +167,11 @@ namespace TensorFlowNet
             }
             return sum;
         }
+
+        public override Tensor Derive()
+        {
+            return new AdditionTensor(mInputTensors.Select(x => x.Derive()).ToArray());
+        }
     }
 
     /// <summary>
@@ -200,6 +217,11 @@ namespace TensorFlowNet
             }
             return difference;
         }
+
+        public override Tensor Derive()
+        {
+            return new SubtractionTensor(mInputTensors.Select(x => x.Derive()).ToArray());
+        }
     }
 
     public class MultiplicationTensor : Tensor
@@ -242,6 +264,17 @@ namespace TensorFlowNet
             }
             return product;
         }
+
+        public override Tensor Derive()
+        {
+            List<Tensor> tensors = new List<Tensor>();
+            for (int input = 0; input < mInputTensors.Count; input++)
+            {
+                
+            }
+
+            return new AdditionTensor(tensors.ToArray());
+        }
     }
 
     public class SquareTensor : Tensor
@@ -257,6 +290,37 @@ namespace TensorFlowNet
         public override Matrix<float> Evaluate(Dictionary<string, Matrix<float>> feedDict)
         {
             return mTensor.Evaluate(feedDict).Map(e => (float)Math.Pow(e, 2));
+        }
+    }
+
+    public class PowerTensor : Tensor
+    {
+        Tensor mTensor { get; set; }
+        Tensor mPower { get; set; }
+        public PowerTensor(Tensor tensor, Tensor power) : base(typeof(float))
+        {
+            mTensor = tensor;
+            mPower = power;
+        }
+
+        public override string TensorName => "Pow";
+
+        public override Matrix<float> Evaluate(Dictionary<string, Matrix<float>> feedDict)
+        {
+            var tensorResult = mTensor.Evaluate(feedDict);
+            var powerResult = mPower.Evaluate(feedDict);
+
+            var powResult = Matrix<float>.Build.Sparse(tensorResult.RowCount, tensorResult.ColumnCount);
+
+            for (int rC = 0; rC < tensorResult.RowCount; rC++)
+            {
+                for (int cC = 0; cC < tensorResult.ColumnCount; cC++)
+                {
+                    powResult[rC, cC] = (float)Math.Pow(tensorResult[rC, cC], powerResult[rC, cC]);
+                }
+            }
+
+            return powResult;
         }
     }
 

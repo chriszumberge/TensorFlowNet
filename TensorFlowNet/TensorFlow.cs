@@ -45,9 +45,11 @@ namespace TensorFlowNet
             return (ConstantTensor)AddTensor(newTensor, count);
         }
 
-        public static AdditionTensor Add(params Tensor[] tensors)
+        //public static AdditionTensor Add(params Tensor[] tensors)
+        public static AdditionTensor Add(Tensor input1, Tensor input2)
         {
-            AdditionTensor newTensor = new AdditionTensor(tensors);
+            //AdditionTensor newTensor = new AdditionTensor(tensors);
+            AdditionTensor newTensor = new AdditionTensor(input1, input2);
             int count = Tensors.Count(t => t.Value is AdditionTensor);
             return (AdditionTensor)AddTensor(newTensor, count);
         }
@@ -109,6 +111,13 @@ namespace TensorFlowNet
             VariableTensor newTensor = new VariableTensor(initialValue, typeof(float));
             int count = Tensors.Count(t => t.Value is VariableTensor);
             return (VariableTensor)AddTensor(newTensor, count);
+        }
+
+        public static PowerTensor Pow(Tensor value, Tensor power)
+        {
+            PowerTensor newTensor = new PowerTensor(value, power);
+            int count = Tensors.Count(t => t.Value is PowerTensor);
+            return (PowerTensor)AddTensor(newTensor, count);
         }
 
         public static Session Session()

@@ -131,9 +131,13 @@ namespace TensorFlowNet
     public class AdditionTensor : Tensor
     {
         List<Tensor> mInputTensors { get; set; } = new List<Tensor>();
-        public AdditionTensor(params Tensor[] inputs) : base(typeof(float))
+        private AdditionTensor(params Tensor[] inputs) : base(typeof(float))
         {
             mInputTensors = inputs.ToList();
+        }
+        public AdditionTensor(Tensor input1, Tensor input2) : base(typeof(float))
+        {
+            mInputTensors = new List<Tensor> { input1, input2 };
         }
 
         public override string TensorName => "Add";
@@ -181,9 +185,13 @@ namespace TensorFlowNet
     public class SubtractionTensor : Tensor
     {
         List<Tensor> mInputTensors { get; set; } = new List<Tensor>();
-        public SubtractionTensor(params Tensor[] inputs) : base(typeof(float))
+        private SubtractionTensor(params Tensor[] inputs) : base(typeof(float))
         {
             mInputTensors = inputs.ToList();
+        }
+        public SubtractionTensor(Tensor input1, Tensor input2) : base(typeof(float))
+        {
+            mInputTensors = new List<Tensor> { input1, input2 };
         }
 
         public override string TensorName => "Subtr";
@@ -229,19 +237,32 @@ namespace TensorFlowNet
         List<Tensor> mInputTensors { get; set; } = new List<Tensor>();
 
         // Initialize to identity
-        float mMultValue { get; set; } = 1;
+        //float mMultValue { get; set; } = 1;
 
-        public MultiplicationTensor(params Tensor[] inputTensors) : base(typeof(float))
+        private MultiplicationTensor(params Tensor[] inputTensors) : base(typeof(float))
         {
             mInputTensors = inputTensors.ToList();
         }
-
-
-        public MultiplicationTensor(float multValue, params Tensor[] inputTensors) : base(typeof(float))
+        public MultiplicationTensor(Tensor input1, Tensor input2) : base(typeof(float))
         {
-            mInputTensors = inputTensors.ToList();
-            mMultValue = multValue;
+            mInputTensors = new List<Tensor> { input1, input2 };
         }
+
+        public MultiplicationTensor(Tensor input, float multValue) : base(typeof(float))
+        {
+            mInputTensors = new List<Tensor> { input, (ConstantTensor)multValue };
+        }
+
+        public MultiplicationTensor(Tensor input) : base(typeof(float))
+        {
+            mInputTensors = new List<Tensor> { input, (ConstantTensor)1 };
+        }
+
+        //public MultiplicationTensor(float multValue, params Tensor[] inputTensors) : base(typeof(float))
+        //{
+        //    mInputTensors = inputTensors.ToList();
+        //    mMultValue = multValue;
+        //}
 
         public override string TensorName => "Mult";
 
@@ -256,7 +277,6 @@ namespace TensorFlowNet
                 {
                     product *= inputTensor.Evaluate(feedDict);
                 }
-                product *= mMultValue;
             }
             else
             {
@@ -267,13 +287,7 @@ namespace TensorFlowNet
 
         public override Tensor Derive()
         {
-            List<Tensor> tensors = new List<Tensor>();
-            for (int input = 0; input < mInputTensors.Count; input++)
-            {
-                
-            }
-
-            return new AdditionTensor(tensors.ToArray());
+            throw new NotImplementedException();
         }
     }
 
@@ -290,6 +304,11 @@ namespace TensorFlowNet
         public override Matrix<float> Evaluate(Dictionary<string, Matrix<float>> feedDict)
         {
             return mTensor.Evaluate(feedDict).Map(e => (float)Math.Pow(e, 2));
+        }
+
+        public override Tensor Derive()
+        {
+            return new MultiplicationTensor(mTensor, 2);
         }
     }
 
@@ -321,6 +340,11 @@ namespace TensorFlowNet
             }
 
             return powResult;
+        }
+
+        public override Tensor Derive()
+        {
+            return mPower * new PowerTensor(mTensor, mPower - 1);
         }
     }
 
@@ -363,6 +387,11 @@ namespace TensorFlowNet
                 product = Matrix<float>.Build.Dense(1, 1, 1);
             }
             return product;
+        }
+
+        public override Tensor Derive()
+        {
+            throw new NotImplementedException();
         }
     }
 
@@ -461,6 +490,11 @@ namespace TensorFlowNet
             }
 
             return sum;
+        }
+
+        public override Tensor Derive()
+        {
+            throw new NotImplementedException();
         }
     }
 

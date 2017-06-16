@@ -116,6 +116,14 @@ namespace TensorFlowNet.Demo
             }
             Print(sess.Run(W, b));
 
+            // Just running x3
+            var q = TensorFlow.Constant(2.0f);
+            var q_cubed = TensorFlow.Pow(q, (ConstantTensor)3);
+            Print(sess.Run(q_cubed));
+
+            var q_cubed_derived = q_cubed.Derive();
+            Print(sess.Run(q_cubed_derived));
+
             Console.WriteLine("Done");
             Console.ReadLine();
         }

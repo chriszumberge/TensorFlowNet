@@ -65,48 +65,48 @@ namespace TensorFlowNet
 
         public static MultiplicationTensor operator *(int multiplicity, Tensor a)
         {
-            return new MultiplicationTensor(multiplicity, a);
+            return new MultiplicationTensor(a, multiplicity);
         }
 
         public static MultiplicationTensor operator *(Tensor a, int multiplicity)
         {
-            return new MultiplicationTensor(multiplicity, a);
+            return new MultiplicationTensor(a, multiplicity);
         }
 
         public static MultiplicationTensor operator *(float multiplicity, Tensor a)
         {
-            return new MultiplicationTensor(multiplicity, a);
+            return new MultiplicationTensor(a, multiplicity);
         }
 
         public static MultiplicationTensor operator *(Tensor a, float multiplicity)
         {
-            return new MultiplicationTensor(multiplicity, a);
+            return new MultiplicationTensor(a, multiplicity);
         }
 
-        //public static DivisionTensor operator /(Tensor a, Tensor b)
-        //{
-        //    return new DivisionTensor(a, b);
-        //}
+        public static DivisionTensor operator /(Tensor a, Tensor b)
+        {
+            return new DivisionTensor(a, b);
+        }
 
-        //public static DivisionTensor operator /(int diviser, Tensor a)
-        //{
-        //    return new DivisionTensor(diviser, a);
-        //}
+        public static DivisionTensor operator /(int diviser, Tensor a)
+        {
+            return new DivisionTensor(diviser, a);
+        }
 
-        //public static DivisionTensor operator /(Tensor a, int diviser)
-        //{
-        //    return new DivisionTensor(a, (ConstantTensor)diviser);
-        //}
+        public static DivisionTensor operator /(Tensor a, int diviser)
+        {
+            return new DivisionTensor(a, (ConstantTensor)diviser);
+        }
 
-        //public static DivisionTensor operator /(float diviser, Tensor a)
-        //{
-        //    return new DivisionTensor(diviser, a);
-        //}
+        public static DivisionTensor operator /(float diviser, Tensor a)
+        {
+            return new DivisionTensor(diviser, a);
+        }
 
-        //public static DivisionTensor operator /(Tensor a, float diviser)
-        //{
-        //    return new DivisionTensor(a, (ConstantTensor)diviser);
-        //}
+        public static DivisionTensor operator /(Tensor a, float diviser)
+        {
+            return new DivisionTensor(a, (ConstantTensor)diviser);
+        }
     }
 
     public static class TensorExtensions

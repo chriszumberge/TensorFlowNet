@@ -2,12 +2,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TensorFlowNet
 {
-    public abstract partial class Tensor
+    public abstract partial class Tensor : Node
     {
         public string Identifier { get; internal set; }
 
@@ -35,19 +33,20 @@ namespace TensorFlowNet
     }
 
     /// <summary>
-    /// Constant tensors take no input, and output a vlue that it stores itnernally.
+    /// Constant tensors take no input, and output a vlue that it stores internally.
     /// </summary>
     /// <seealso cref="TensorFlowNet.Tensor" />
     public class ConstantTensor : Tensor
     {
+        public override string TensorName => "Const";
+        public override string GraphText => $"{mValue}";
+
         protected Matrix<float> mValue { get; set; }
 
         internal ConstantTensor(Matrix<float> value, Type dataType) : base(dataType)
         {
             mValue = value;
         }
-
-        public override string TensorName => "Const";
 
         public override Matrix<float> Evaluate(Dictionary<string, Matrix<float>> feedDict)
         {
@@ -76,11 +75,12 @@ namespace TensorFlowNet
 
     public class PlaceholderTensor : Tensor
     {
+        public override string TensorName => "Placeholder";
+        public override string GraphText => $"PL";
+
         public PlaceholderTensor(Type dataType) : base(dataType)
         {
         }
-
-        public override string TensorName => "Placeholder";
 
         public override Tensor Derive()
         {
@@ -96,6 +96,9 @@ namespace TensorFlowNet
 
     public class VariableTensor : Tensor
     {
+        public override string TensorName => "Variable";
+        public override string GraphText => $"{Value}";
+
         public readonly Matrix<float> InitialValue;
 
         public Matrix<float> Value { get; internal set; }
@@ -104,8 +107,6 @@ namespace TensorFlowNet
         {
             InitialValue = initialValue;
         }
-
-        public override string TensorName => "Variable";
 
         public override Matrix<float> Evaluate(Dictionary<string, Matrix<float>> feedDict)
         {
@@ -130,6 +131,9 @@ namespace TensorFlowNet
     /// <seealso cref="TensorFlowNet.Tensor" />
     public class AdditionTensor : Tensor
     {
+        public override string TensorName => "Add";
+        public override string GraphText => "+";
+
         List<Tensor> mInputTensors { get; set; } = new List<Tensor>();
         private AdditionTensor(params Tensor[] inputs) : base(typeof(float))
         {
@@ -139,8 +143,6 @@ namespace TensorFlowNet
         {
             mInputTensors = new List<Tensor> { input1, input2 };
         }
-
-        public override string TensorName => "Add";
 
         public override Matrix<float> Evaluate(Dictionary<string, Matrix<float>> feedDict)
         {
@@ -184,6 +186,9 @@ namespace TensorFlowNet
     /// <seealso cref="TensorFlowNet.Tensor" />
     public class SubtractionTensor : Tensor
     {
+        public override string TensorName => "Subtr";
+        public override string GraphText => "-";
+
         List<Tensor> mInputTensors { get; set; } = new List<Tensor>();
         private SubtractionTensor(params Tensor[] inputs) : base(typeof(float))
         {
@@ -193,8 +198,6 @@ namespace TensorFlowNet
         {
             mInputTensors = new List<Tensor> { input1, input2 };
         }
-
-        public override string TensorName => "Subtr";
 
         public override Matrix<float> Evaluate(Dictionary<string, Matrix<float>> feedDict)
         {
@@ -234,6 +237,9 @@ namespace TensorFlowNet
 
     public class MultiplicationTensor : Tensor
     {
+        public override string TensorName => "Mult";
+        public override string GraphText => "*";
+
         List<Tensor> mInputTensors { get; set; } = new List<Tensor>();
 
         // Initialize to identity
@@ -264,8 +270,6 @@ namespace TensorFlowNet
         //    mMultValue = multValue;
         //}
 
-        public override string TensorName => "Mult";
-
         public override Matrix<float> Evaluate(Dictionary<string, Matrix<float>> feedDict)
         {
             Matrix<float> product;
@@ -293,13 +297,14 @@ namespace TensorFlowNet
 
     public class SquareTensor : Tensor
     {
+        public override string TensorName => "Square";
+        public override string GraphText => "^2";
+
         Tensor mTensor { get; set; }
         public SquareTensor(Tensor tensor) : base(typeof(float))
         {
             mTensor = tensor;
         }
-
-        public override string TensorName => "Square";
 
         public override Matrix<float> Evaluate(Dictionary<string, Matrix<float>> feedDict)
         {
@@ -314,6 +319,9 @@ namespace TensorFlowNet
 
     public class PowerTensor : Tensor
     {
+        public override string TensorName => "Pow";
+        public override string GraphText => $"^{mPower.GraphText}";
+
         Tensor mTensor { get; set; }
         Tensor mPower { get; set; }
         public PowerTensor(Tensor tensor, Tensor power) : base(typeof(float))
@@ -321,8 +329,6 @@ namespace TensorFlowNet
             mTensor = tensor;
             mPower = power;
         }
-
-        public override string TensorName => "Pow";
 
         public override Matrix<float> Evaluate(Dictionary<string, Matrix<float>> feedDict)
         {
@@ -350,6 +356,9 @@ namespace TensorFlowNet
 
     public class DivisionTensor : Tensor
     {
+        public override string TensorName => "Division";
+        public override string GraphText => "/";
+
         List<Tensor> mInputTensors { get; set; } = new List<Tensor>();
 
         // Initialize to identity
@@ -366,8 +375,6 @@ namespace TensorFlowNet
             mInputTensors = inputTensors.ToList();
             mDivValue = divValue;
         }
-
-        public override string TensorName => "Division";
 
         public override Matrix<float> Evaluate(Dictionary<string, Matrix<float>> feedDict)
         {
@@ -397,6 +404,9 @@ namespace TensorFlowNet
 
     public class ReduceSumTensor : Tensor
     {
+        public override string TensorName => "Sum";
+        public override string GraphText => $"Sum {Enum.GetName(typeof(ReduceSumAxis), Axis)}";
+
         public Tensor InputTensor { get; private set; }
         public ReduceSumAxis Axis { get; private set; }
         public bool KeepDimensions { get; private set; }
@@ -409,8 +419,6 @@ namespace TensorFlowNet
             KeepDimensions = keepDimensions;
             Name = name;
         }
-
-        public override string TensorName => "Sum";
 
         /// <summary>
         /// Evaluates the specified feed dictionary.

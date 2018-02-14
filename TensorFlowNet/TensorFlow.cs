@@ -130,7 +130,7 @@ namespace TensorFlowNet
         /// </summary>
         public static GlobalVariablesInitializerOperation GlobalVariablesInitializer()
         {
-            return new GlobalVariablesInitializerOperation(Tensors.Where(x => x.Value is VariableTensor).Select(x => (VariableTensor)x.Value));
+            return new GlobalVariablesInitializerOperation(new Func<IEnumerable<VariableTensor>>(() => Tensors.Where(x => x.Value is VariableTensor).Select(x => (VariableTensor)x.Value)));
         }
 
         public static class Train
@@ -151,7 +151,7 @@ namespace TensorFlowNet
 
             public GradientDescentOperation Minimize(Tensor loss)
             {
-                return new GradientDescentOperation(loss);
+                return new GradientDescentOperation(loss, Tensors.Where(x => x.Value is VariableTensor).Select(x => (VariableTensor)x.Value).ToList());
             }
         }
     }

@@ -21,7 +21,7 @@ namespace TensorFlowNet
 
         public void Run(Operation op, Dictionary<string, Matrix<float>> feedDict)
         {
-
+            
         }
 
         public Matrix<float>[] Run(params Tensor[] tensors)

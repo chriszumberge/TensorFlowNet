@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace TensorFlowNet
 {
-    public abstract class Operation
+    public abstract class Operation : Node
     {
         public string Identifier { get; internal set; }
         
@@ -27,18 +27,19 @@ namespace TensorFlowNet
 
     public class GlobalVariablesInitializerOperation : Operation
     {
-        IEnumerable<VariableTensor> mGlobalVariables { get; set; }
-
         public override string OperationName => "Init";
+        public override string GraphText => OperationName;
 
-        public GlobalVariablesInitializerOperation(IEnumerable<VariableTensor> globalVariables)
+        Func<IEnumerable<VariableTensor>> _globalVariablesGetterFunction { get; set; }
+
+        public GlobalVariablesInitializerOperation(Func<IEnumerable<VariableTensor>> globalVariablesGetterFunction)
         {
-            mGlobalVariables = globalVariables;
+            _globalVariablesGetterFunction = globalVariablesGetterFunction;
         }
 
         public override void Execute()
         {
-            foreach (VariableTensor tensor in mGlobalVariables)
+            foreach (VariableTensor tensor in _globalVariablesGetterFunction())
             {
                 tensor.Initialize();
             }
@@ -47,46 +48,80 @@ namespace TensorFlowNet
 
     public class GradientDescentOperation : Operation
     {
-        public GradientDescentOperation(Tensor loss)
-        {
+        public override string OperationName => "GradientDescent";
+        public override string GraphText => "Op";
 
+        Tensor _lossTensor;
+        List<VariableTensor> _varList;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="GradientDescentOperation" /> class.
+        /// </summary>
+        /// <param name="loss">A Tensor containing the value to minimize.</param>
+        /// <param name="varList">Optional list VariableTensors to update to minimize loss.</param>
+        public GradientDescentOperation(Tensor loss, List<VariableTensor> varList)
+        {
+            _lossTensor = loss;
+            _varList = varList;
         }
 
-        public override string OperationName => "GradientDescent";
-
+        // Just calls compute_gradients, then apply_gradients.. 
+        // theoretically should this actually create them as nodes?
         public override void Execute()
         {
-            //new ComputeGradientsOperation().Execute();
-            //new ApplyGradientsOperation().Execute();
+            var computeOp = new ComputeGradientsOperation(_lossTensor, _varList);
+            computeOp.Execute();
+
+            new ApplyGradientsOperation(computeOp.ComputedGradients).Execute();
         }
     }
 
     public class ComputeGradientsOperation : Operation
     {
         public override string OperationName => "ComputeGradients";
+        public override string GraphText => "Op";
+
+        Tensor _lossTensor;
+        List<VariableTensor> _varList;
+
+        public ComputeGradientsOperation(Tensor loss, List<VariableTensor> varList)
+        {
+            _lossTensor = loss;
+            _varList = varList;
+        }
+
+        List<GradientVariablePair> _computedGradients { get; set; } = new List<GradientVariablePair>();
+        public List<GradientVariablePair> ComputedGradients => _computedGradients;
 
         public override void Execute()
         {
-            throw new NotImplementedException();
+            
         }
     }
 
     public class ApplyGradientsOperation : Operation
     {
-        List<VariableTensor> mVariables { get; set; }
-        float mGradientQuantity { get; set; }
-
-        public ApplyGradientsOperation(List<VariableTensor> variables, float gradientQuantity)
-        {
-            mGradientQuantity = gradientQuantity;
-            mVariables = variables;
-        }
-
         public override string OperationName => "ApplyGradients";
+        public override string GraphText => "Op";
+
+        List<GradientVariablePair> _gradients;
+
+        public ApplyGradientsOperation(List<GradientVariablePair> gradients)
+        {
+            _gradients = gradients;
+        }
 
         public override void Execute()
         {
-            mVariables.ForEach(x => x.Value += mGradientQuantity);
+            _gradients.ForEach(x => x.Variable.Value += x.Gradient);
         }
+    }
+
+    public class GradientVariablePair : Tuple<float, VariableTensor>
+    {
+        public GradientVariablePair(float gradient, VariableTensor variable) : base(gradient, variable) { }
+
+        public float Gradient => Item1;
+        public VariableTensor Variable => Item2;
     }
 }

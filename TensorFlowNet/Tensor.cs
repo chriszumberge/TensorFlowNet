@@ -113,6 +113,8 @@ namespace TensorFlowNet
             return Value;
         }
 
+        // TODO add Initialize method that returns an init operation
+
         internal void Initialize()
         {
             Value = InitialValue;

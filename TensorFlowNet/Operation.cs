@@ -19,6 +19,8 @@ namespace TensorFlowNet
 
         public abstract void Execute();
 
+        // TODO an initialize method that inits its variables
+
         public override string ToString()
         {
             return $"<Operation \"{Identifier}\" type=NoOp>";

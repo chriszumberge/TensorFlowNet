@@ -11,6 +11,20 @@ namespace TensorFlowNet
     {
         static Dictionary<string, Tensor> Tensors { get; set; } = new Dictionary<string, Tensor>();
 
+        static Dictionary<string, Dictionary<string, VariableTensor>> VariableCollections = new Dictionary<string, Dictionary<string, VariableTensor>>
+        {
+            { GraphKeys.GLOBAL_VARIABLES, new Dictionary<string, VariableTensor>() },
+            { GraphKeys.TRAINABLE_VARIABLES, new Dictionary<string, VariableTensor>() }
+        };
+
+        public static class GraphKeys
+        {
+            public const string GLOBAL_VARIABLES = "GLOBAL_VARIABLES";
+            public const string TRAINABLE_VARIABLES = "TRAINABLE_VARIABLES";
+        }
+        //static Dictionary<string, VariableTensor> GlobalVariables { get; set; } = new Dictionary<string, VariableTensor>();
+        //static Dictionary<string, VariableTensor> TrainableVariables { get; set; } = new Dictionary<string, VariableTensor>();
+
         private static Tensor AddTensor(Tensor newTensor, int count)
         {
             newTensor.Identifier = $"{newTensor.TensorName}_{count}:0";
@@ -66,7 +80,12 @@ namespace TensorFlowNet
             float convertedValue = (float)Convert.ChangeType(initialValue, typeof(float));
             VariableTensor newTensor = new VariableTensor(Matrix<float>.Build.Dense(1, 1, convertedValue), typeof(T));
             int count = Tensors.Count(t => t.Value is VariableTensor);
-            return (VariableTensor)AddTensor(newTensor, count);
+            VariableTensor addedTensor = (VariableTensor)AddTensor(newTensor, count);
+
+            VariableCollections[GraphKeys.GLOBAL_VARIABLES].Add(addedTensor.Identifier, addedTensor);
+            VariableCollections[GraphKeys.TRAINABLE_VARIABLES].Add(addedTensor.Identifier, addedTensor);
+
+            return addedTensor;
         }
 
         public static ReduceSumTensor ReduceSum(Tensor tensor, ReduceSumAxis axis = ReduceSumAxis.None, bool keepDimensions = false, string name = "")
